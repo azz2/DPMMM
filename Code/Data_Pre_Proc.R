@@ -1,28 +1,62 @@
-Pre_Proc<-function(triplet, bin_width, Triplet_meta){
+Pre_Proc<-function(triplet, bin_width, Triplet_meta, check_local = F){
 
 
 freq = Triplet_meta[triplet,"AltFreq"]
 pos = Triplet_meta[triplet,"AltPos"]
 cell = Triplet_meta[triplet,"Site"]
 fname = Triplet_meta[triplet,"Cell"]
+
 if (cell != 0){
-  trials <- read.table(url(paste("http://www2.stat.duke.edu/~st118/Jenni/STCodes/VC/", 
+  if (check_local == T){
+    print("checking local")
+    trials <- read.table(paste0(directory, "LocalData/", fname, ".txt"), sep = "\t")
+    trials = trials[,-dim(trials)[2]]
+    colnames(trials) = c("TRIAL", "TASKID", "A_FREQ", "B_FREQ", "XA", 
+                         "XB", "REWARD", "A_LEVEL", "B_LEVEL", "SOFF")
+  } else {
+  print("checking remote")
+  trials <- tryCatch({trials <- read.table(url(paste("http://www2.stat.duke.edu/~st118/Jenni/STCodes/VC/", 
                                  fname,".txt",sep="") ), sep="\t" )
+            trials = trials[,-dim(trials)[2]]
+            return(trials)},
+           error = function(e) {trials <- read.table(
+             url(paste("http://www2.stat.duke.edu/~st118/Jenni/STCodes/JA/",
+                      fname, ".txt", sep = "")), sep = "")
+           trials <- cbind(trials, 600)
+           return(trials)})
+    
   # seems to be extra column of NAs
   # probably a result of extra spaces
   # we now drop it
-  trials = trials[,-dim(trials)[2]]
+  
+  colnames(trials) = c("TRIAL", "TASKID", "A_FREQ", "B_FREQ", "XA", 
+                       "XB", "REWARD", "A_LEVEL", "B_LEVEL", "SOFF")
   # name remaining columns
-  colnames(trials) = c("TRIAL", "TASKID", "A_FREQ", "B_FREQ", "XA", "XB", "REWARD", "A_LEVEL", "B_LEVEL", "SOFF")
+  }
+
+  
   
   url = paste("http://www2.stat.duke.edu/~st118/Jenni/STCodes/VC/", fname,
               "_cell", cell, "_spiketimes.txt",sep="")
-  spiketimes <- read.table(url(paste("http://www2.stat.duke.edu/~st118/Jenni/STCodes/VC/",
+  if (check_local == T){
+    spiketimes <- read.table(paste0(directory, "LocalData/", fname,
+                             "_cell", cell, "_spiketimes.txt"), sep = "\t")
+  } else {
+    spiketimes <- tryCatch({spiketimes <- read.table(url(paste("http://www2.stat.duke.edu/~st118/Jenni/STCodes/VC/",
                                      fname, "_cell", cell, "_spiketimes.txt",sep="") ), sep="\t" )
-  
+                            spiketimes = spiketimes[,-dim(spiketimes)[2]]
+                            return(spiketimes)},
+             error = function(e) {
+              url = paste("http://www2.stat.duke.edu/~st118/Jenni/STCodes/JA/", 
+                                              fname,
+                                              "_spiketimes.txt",sep="")
+              spiketimes <- read.table(url(paste("http://www2.stat.duke.edu/~st118/Jenni/STCodes/JA/",
+                                                fname, "_spiketimes.txt",sep="") ), sep="" )
+              return(spiketimes)})
+  }
   # data file generates an extra column of NAs
   # we drop this unneeded column here
-  spiketimes = spiketimes[,-dim(spiketimes)[2]]
+  
   colnames(spiketimes) = c("TRIAL2", "TIMES")
 } else {
   trials <- read.table(url(paste("http://www2.stat.duke.edu/~st118/Jenni/STCodes/JA/",

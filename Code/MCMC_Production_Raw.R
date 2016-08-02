@@ -172,15 +172,21 @@ s_gamma = 1
 
 #ell = c(1,2,3,4,5,15)
 # using new length scales
-ell = c(3, 6, 8, 20, 80)
+#ell = c(3, 6, 8, 20, 80)
 L = length(ell)
 #ell_0 = c( rep(.5/(L-1),(L-1) ), .5)
-ell_0 = rep(1/L, L)
+#ell_0 = rep(1/L, L)
+#ell_0 = c(.05, .05, .125, .725, .05)
 #sampling for sigma2
 delta = 2e4
 #r_0 = 51
 #s_0 = (r_0 - 1)*(1-exp(-delta^2/ell^2)) 
-r_0 = 0.01; s_0 = r_0
+#r_0 = 0.01; s_0 = r_0
+
+ell <- c(3, 5, 8, 12, 20)
+ell_0 <- c(.2, .15, .1, .1, .45)
+r_0 = 0.01
+s_0 = 1
 
 #parameters for pi_gamma
 alpha_gamma = 1/K

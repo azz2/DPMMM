@@ -6,7 +6,7 @@ single_draw_plot <- function(n_samps, ALPHA, trails_to_sample, add_true_sin = F)
   if (nRep < trails_to_sample){
     sampled_trails = 1:nRep
   } else {
-    sampled_trails = sample(1:nRep, trails_to_sample)
+    sampled_trails = 1:nRep
   }
   for (i in sampled_trails){
     rows = sample(1:N, n_samps)
@@ -347,4 +347,82 @@ MCMC.plot = function(MCMC.results, all.plots = F, n_samps, widthes, add_true_sin
   pdf(paste(Triplet_fig_dir,"Summary_Triplet",triplet,".pdf", sep=""))
   multiplot(p1, p2, p3, p4, p5, p6, cols = 2)
   dev.off()
+}
+
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+alt_plots <- function(MCMC.results, n_samps, widthes = c(.05, .1, .15)){
+  ALPHA = MCMC.results$ALPHA
+  t.T = ncol(ALPHA[[1]])
+  nRep = length(ALPHA)
+  N = nrow(ALPHA[[1]])
+  p1 = single_draw_plot(n_samps, MCMC.results$ALPHA, nRep)
+  alpha_mean = alpha_pt025  = alpha_pt975 = matrix(nrow = nRep, ncol = t.T)
+  for(i in 1:nRep){
+    # compute the mean for alpha
+    alpha_mean[i,] = apply(ALPHA[[i]],2,mean)
+    # compute 2.5% quantile
+    alpha_pt025[i,] = apply(ALPHA[[i]],2,quantile,.025)
+    # compute 97.5% quantile
+    alpha_pt975[i,] = apply(ALPHA[[i]],2,quantile,.975)
+  }  
+  
+  trail_names = paste0("Trail_", 1:nrow(alpha_mean))
+  row.names(alpha_mean) = trail_names
+  mean_df = data.frame(alpha_mean, Trail = trail_names)
+  low_df = data.frame(alpha_pt025, Trail = trail_names)
+  up_df = data.frame(alpha_pt975, Trail = trail_names)
+  colnames(mean_df) = c(1:ncol(alpha_mean), "Trail")
+  mean_df = melt(mean_df, id.vars = "Trail", value.name = "mean", variable.name = "Time")
+  colnames(low_df) = c(1:ncol(alpha_pt025), "Trail")
+  low_df = melt(low_df, id.vars = "Trail", value.name = "low", variable.name = "Time")
+  colnames(up_df) = c(1:ncol(alpha_pt975), "Trail")
+  up_df = melt(up_df, id.vars = "Trail", value.name = "up", variable.name = "Time")
+  
+  all_df = left_join(mean_df, low_df, by = c("Trail", "Time"))
+  all_df = left_join(all_df, up_df, by = c("Trail", "Time"))
+  all_df$Time = 25*as.numeric(all_df$Time)
+  p1 = p1 + 
+    geom_line(data = all_df, aes(x = Time, y = mean,
+                          group = Trail, colour = Trail), alpha = 1)
+  
+  # second plot
+  # violin plots for each trail
+  cols = c(gg_color_hue(nRep), "#000000")
+  a.minmax <- with(MCMC.results, cbind(MinMax[,order(colMeans(MinMax))], MinMax.Pred))
+  mean_ordered <- c(order(colMeans(MCMC.results$MinMax)), nRep + 1)
+  col_names <- c(paste0("trial_", 1:nRep), "predictive")
+  colnames(a.minmax) <- col_names[mean_ordered]
+  dd <- stack(data.frame(a.minmax))
+  names(dd) <- c("MinMax", "Trial")
+  p2 = ggplot(dd, aes(x = factor(Trial, levels(Trial)[c(1, mean_ordered + 1)]), 
+                      y = MinMax, 
+                      fill = factor(Trial, levels(Trial)[c(1, mean_ordered + 1)]))) + 
+    geom_violin() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+    theme(legend.position = "none") +
+    scale_fill_manual(values = cols[c(nRep + 1, mean_ordered)]) +
+    xlab("Trial")
+  
+  # make new switch plot
+  # use violin plot for selected widthes
+  switch_counts = switch_matrix(MCMC.results$ALPHA_pred, widthes)
+  switch_full = melt(data.frame(width = 2*widthes, switch_counts),
+                     id.vars = "width")
+  
+  p3 = ggplot(switch_full, aes(x = factor(width), y = value)) +
+    geom_violin(aes(fill = factor(width))) +
+    theme(legend.position = "none") +
+    ylab("Number of Switches") +
+    xlab("Switch Distance")
+  triplet = MCMC.results$triplet
+  Triplet_fig_dir = paste(Fig_dir,"Triplet_",triplet,"/",sep="")
+  
+  pdf(paste(Triplet_fig_dir,"Summary_Triplet_alt",triplet,".pdf", sep=""))
+  multiplot(p1, p2, p3, cols = 2)
+  dev.off()
+  #return(multiplot(p1, p2, p3, cols = 2))
 }
