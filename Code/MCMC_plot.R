@@ -275,8 +275,29 @@ MCMC.plot = function(MCMC.results, all.plots = F, n_samps, widthes, add_true_sin
   
 # make single page of plots
   
+  ################################
+  # first plot
+  # sample alpha curves
+  p1 = single_draw_plot(n_samps, MCMC.results$ALPHA, nRep)
+  alpha_mean = matrix(nrow = nRep, ncol = bins)
+  for(i in 1:nRep){
+    # compute the mean for alpha
+    alpha_mean[i,] = apply(ALPHA[[i]],2,mean)
+  }  
+  
+  trail_names = paste0("Trail_", 1:nrow(alpha_mean))
+  row.names(alpha_mean) = trail_names
+  mean_df = data.frame(alpha_mean, Trail = trail_names)
+  
+  colnames(mean_df) = c(1:ncol(alpha_mean), "Trail")
+  mean_df = melt(mean_df, id.vars = "Trail", value.name = "mean", variable.name = "Time")
+
+  mean_df$Time = 25*as.numeric(mean_df$Time)
+  p1 = p1 + 
+    geom_line(data = mean_df, aes(x = Time, y = mean,
+                                 group = Trail, colour = Trail), alpha = 1)
   # plot of alpha draws
-  p1 = single_draw_plot(n_samps, ALPHA, 2, add_true_sin)
+
   
   # plot of distributions for length scales
   colnames(Ell_Post) = as.character(ell)
@@ -288,9 +309,15 @@ MCMC.plot = function(MCMC.results, all.plots = F, n_samps, widthes, add_true_sin
     theme(legend.position = "none")
   
   # plot of alpha_bar
-  alpha_bar_df = data.frame(alpha_bar =1/(1+exp(-ETA_BAR_POST)))
-  p3 = ggplot(alpha_bar_df, aes(alpha_bar)) + geom_density() +
-      theme(legend.position = "none") 
+  alpha_bar_POST = data.frame(Posterior =1/(1+exp(-ETA_BAR_POST)))
+  alpha_bar_PRIOR = data.frame(Prior = 1/(1+exp(-ETA_BAR_PRIOR)))
+  alpha_bar_df = melt(data.frame(Posterior = alpha_bar_POST, 
+                                 Prior = alpha_bar_PRIOR))
+  p3 = ggplot(alpha_bar_df, aes(value, 
+                                group = variable,
+                                colour = variable,
+                                fill = variable)) + 
+    geom_density(alpha = 1/5)
   
   # plot of posterior predictive for future alpha*
   df = melt(data.frame(MinMax = MinMax.Pred, Prior = MinMax.Prior))
@@ -325,25 +352,15 @@ MCMC.plot = function(MCMC.results, all.plots = F, n_samps, widthes, add_true_sin
   
   
   switch_counts = switch_matrix(ALPHA_pred, widthes)
-  switch_mean = apply(switch_counts, 1, mean)
-  switch_975 = apply(switch_counts, 1, function(x) {quantile(x, .975)})
-  switch_25 = apply(switch_counts, 1, function(x) {quantile(x, .025)})
-  switch_df = data.frame(Width = 2*widthes,
-                         mean = switch_mean,
-                         low = switch_25,
-                         up = switch_975)
+
   switch_full = melt(data.frame(width = 2*widthes, switch_counts),
                      id.vars = "width")
-  
-  p6 = ggplot(switch_df, aes(x = Width, y = mean)) +
-    geom_line(size = 2) +
-    geom_ribbon(aes(ymin = low, ymax = up), 
-                alpha = .1,
-                fill = "red") +
-    geom_jitter(data = switch_full, aes(x = width, y = value, group = width),
-                alpha = 1/500, colour = "blue", size = 1/2) +
+  p6 = ggplot(switch_full, aes(x = factor(width), y = value)) +
+    geom_violin(aes(fill = factor(width))) +
+    theme(legend.position = "none") +
     ylab("Number of Switches") +
     xlab("Switch Distance")
+
   pdf(paste(Triplet_fig_dir,"Summary_Triplet",triplet,".pdf", sep=""))
   multiplot(p1, p2, p3, p4, p5, p6, cols = 2)
   dev.off()
@@ -354,7 +371,7 @@ gg_color_hue <- function(n) {
   hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
-alt_plots <- function(MCMC.results, n_samps, widthes = c(.05, .1, .15)){
+alt_plots <- function(MCMC.results, n_samps, widthes = c(.1, .2, .3)){
   ALPHA = MCMC.results$ALPHA
   t.T = ncol(ALPHA[[1]])
   nRep = length(ALPHA)
@@ -410,14 +427,25 @@ alt_plots <- function(MCMC.results, n_samps, widthes = c(.05, .1, .15)){
   # make new switch plot
   # use violin plot for selected widthes
   switch_counts = switch_matrix(MCMC.results$ALPHA_pred, widthes)
+  switch_mean = apply(switch_counts, 1, mean)
+  switch_975 = apply(switch_counts, 1, function(x) {quantile(x, .975)})
+  switch_25 = apply(switch_counts, 1, function(x) {quantile(x, .025)})
+  switch_df = data.frame(Width = 2*widthes,
+                         mean = switch_mean,
+                         low = switch_25,
+                         up = switch_975)
   switch_full = melt(data.frame(width = 2*widthes, switch_counts),
                      id.vars = "width")
-  
-  p3 = ggplot(switch_full, aes(x = factor(width), y = value)) +
-    geom_violin(aes(fill = factor(width))) +
-    theme(legend.position = "none") +
+  p3 = ggplot(switch_df, aes(x = Width, y = mean)) +
+    geom_line(size = 2) +
+    geom_ribbon(aes(ymin = low, ymax = up), 
+                alpha = .1,
+                fill = "red") +
+    geom_jitter(data = switch_full, aes(x = width, y = value, group = width),
+                alpha = 1/500, colour = "blue", size = 1/2) +
     ylab("Number of Switches") +
     xlab("Switch Distance")
+
   triplet = MCMC.results$triplet
   Triplet_fig_dir = paste(Fig_dir,"Triplet_",triplet,"/",sep="")
   
