@@ -4,9 +4,9 @@ rm(list=ls())
 # once packages are installed, no need to set to T
 FIRST_USE = F
 
-exper.name <- "TestNewPlots"
+exper.name <- "TestNewFunction"
 # set burn in
-burnIn = 1000
+burnIn = 
 # set number of iterations
 N.MC = 1000
 # set thinning rate
@@ -112,6 +112,6 @@ log_file = "all_log.txt"
 log_errors(errors, log_file)
 
 # clean up and conversion
-
-clean_convert(exper.name)
+# specify final format as either "pdf" or "png"
+clean_convert(exper.name, out.format = "png")
 

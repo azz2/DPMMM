@@ -6,7 +6,9 @@ MCMC.triplet<-function(triplet, ell_0, ETA_BAR_PRIOR, MinMax.Prior){
   # this function translates the raw time data into counts
   # for bins of width 25ms
   # written by Surja, I believe
-  retX = Pre_Proc(triplet, bin_width = 25, Triplet_meta, F)
+  #retX = Pre_Proc(triplet, bin_width = 25, Triplet_meta, T)
+  # test new function
+  retX = Collect_Data(triplet, bin_width = 25, Triplet_meta)
   # this function returns a list
   # first is counts for each bin
   # take the transpose
