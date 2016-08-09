@@ -4,7 +4,7 @@ clean_convert <- function(exper.name, out.format){
     dir.create(image.dir)
   }
   relevant_trips <- Triplet_meta[triplets,]
-  names_ext <- paste0(relevant_trips$Cell, "_Site", relevant_trips$Site,
+  names_ext <- paste0(relevant_trips$Cell, "_Site", relevant_trips$PairId,
                       "_Freq", relevant_trips$AltFreq,
                       "_Pos", relevant_trips$AltPos, ".", out.format)
   if (out.format == "png"){

@@ -4,27 +4,27 @@ rm(list=ls())
 # once packages are installed, no need to set to T
 FIRST_USE = F
 
-exper.name <- "TestNewFunction"
+exper.name <- "TripletsForPaper"
 # set burn in
-burnIn = 
+burnIn = 25e3
 # set number of iterations
-N.MC = 1000
+N.MC = 25e3
 # set thinning rate
 # if set to 1, no thinning
 thin = 1
 # number of cores to use if running in parallel
-nCores = 8
+nCores = 16
 
 # specify directory of repository
 # this should point to the folder with the 
 # Code, Figures, etc subdirectories
 directory = "/home/grad/azz2/Research/DPMMM/"
 # specify data file
-Triplet_meta = read.csv("/home/grad/azz2/Research/DPMMM/Filtered_All_HMM.csv")
+Triplet_meta = read.csv("/home/grad/azz2/Research/DPMMM/paper_triplets.csv")
 Triplet_meta = unique(Triplet_meta)
 # this vector specifies the ROWS of
 # Triplet_meta that we want to analyze
-triplets = c(283, 816, 1041, 1643)
+triplets = 1
 
 # load needed libraries
 if(FIRST_USE) install.packages(c("BayesLogit", "parallel", "ggplot2"), 
@@ -94,7 +94,7 @@ tempN.MC = N.MC
 # compile to byte code
 burnIn = 10
 N.MC = 50
-test_run = MCMC.triplet(1, ell_0, ETA_BAR_PRIOR, MinMax.Prior)
+test_run = MCMC.triplet(364, ell_0, ETA_BAR_PRIOR, MinMax.Prior)
 MCMC.plot(test_run, F, 2, widthes)
 
 # reset burnin and N.MC
@@ -108,10 +108,11 @@ mclapply(MCMC.results, function(x) {try(MCMC.plot(x, F, 30, widthes))}, mc.cores
 
 # collect error messages
 errors = which(sapply(MCMC.results, typeof) == "character")
-log_file = "all_log.txt"
+log_file = "paper_log.txt"
 log_errors(errors, log_file)
+short_log(errors, log_file, triplets)
 
 # clean up and conversion
 # specify final format as either "pdf" or "png"
-clean_convert(exper.name, out.format = "png")
+clean_convert(exper.name, out.format = "pdf")
 

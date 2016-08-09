@@ -3,8 +3,8 @@ Collect_Data <- function(triplet, bin_width, Triplet_meta){
   #####################################################
   freq = Triplet_meta[triplet,"AltFreq"]
   pos = Triplet_meta[triplet,"AltPos"]
-  cell = Triplet_meta[triplet,"Site"]
-  fname = Triplet_meta[triplet,"Cell"]
+  cell = Triplet_meta[triplet,"PairId"]
+  fname = Triplet_meta[triplet,"CellId"]
   
   VC.url <- "http://www2.stat.duke.edu/~st118/Jenni/STCodes/VC/"
   JA.url <- "http://www2.stat.duke.edu/~st118/Jenni/STCodes/JA/"

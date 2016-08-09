@@ -216,8 +216,10 @@ MCMC.triplet<-function(triplet, ell_0, ETA_BAR_PRIOR, MinMax.Prior){
     A_POST = A_POST,
     ALPHA_pred = ALPHA_pred,
     MinMax = MinMax)
-  
-    save(file = paste(Triplet_dir,"triplet_",triplet,".RData", sep=""),
+    data_file_name <- paste0(Triplet_meta[triplet,"CellId"], "_Site", Triplet_meta[triplet,"Site"],
+                      "_Freq", Triplet_meta[triplet,"AltFreq"],
+                      "_Pos", Triplet_meta[triplet, "AltPos"])
+    save(file = paste(Triplet_dir,data_file_name,".RData", sep=""),
        alpha_mean, 
        alpha_pt025,
        alpha_pt975,

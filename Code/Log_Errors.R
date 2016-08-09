@@ -10,4 +10,7 @@ log_errors <- function(errors, log_file){
   }
 }
 
-
+short_log <- function(errors, log_file, triplets){
+  cat(errors + min(triplets) - 1, file = log_file, append = TRUE)
+  cat("\n", file = log_file, append = TRUE)
+}
