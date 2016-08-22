@@ -635,7 +635,7 @@ fitter.fn <- function(triplet, triplet.meta, start.time = 0, end.time = 1000, bw
         if(!dir.exists(figure.path)) dir.create(figure.path)
         pdf(file = paste0(figure.path, file.tag, ".pdf"), height = 9, width = 7)
     }
-    plot(fit.post, tilt = tilt, nprior = 1e4)
+    plot(fit.post, tilt = tilt, nprior = fit.post$mcmc["nsamp"])
     if(save.figure) dev.off()
     invisible(fit.post)
     
